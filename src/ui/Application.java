@@ -2,32 +2,24 @@ package ui;
 
 import java.awt.EventQueue;
 
-import javax.swing.JFrame;
+import javax.swing.SwingWorker;
 
-import bo.algorithms.InsertionSort;
+import algorithms.BubbleSort;
+import algorithms.ISortAlgorithm;
 
 public class Application {
 
-	private JFrame frmApplication;
-	Visualization visualization;
+	private static Window frmApplication = new Window();
+
+	private final Sorting sorting;
+	private final ISortAlgorithm algorithm;
 
 	public static void main(String[] args) {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
 					Application window = new Application();
-					window.frmApplication.setVisible(true);
-
-					// Start window
-					Runnable runableSort = new Runnable() {
-						@Override
-						public void run() {
-							window.visualization.draw();
-						}
-					};
-					Thread windowSort = new Thread(runableSort);
-					windowSort.start();
-
+					Application.frmApplication.setVisible(true);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -36,20 +28,58 @@ public class Application {
 	}
 
 	public Application() {
+		sorting = new Sorting();
+		algorithm = new BubbleSort();
+
 		initialize();
 	}
 
-	private void initialize() {
-		int width = 1000, height = 1000;
-
-		frmApplication = new JFrame();
-		frmApplication.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frmApplication.setSize(width, height);
-		frmApplication.setTitle("Visualization of Sorting Algorithms");
-		frmApplication.setResizable(true);
-
-		visualization = new Visualization(new InsertionSort(width), width, height);
-		frmApplication.getContentPane().add(visualization);
+	private void longSleep() {
+		try {
+			Thread.sleep(1000);
+		} catch (InterruptedException ex) {
+			ex.printStackTrace();
+		}
 	}
 
+	private void shuffleAndWait() {
+		sorting.shuffle();
+		longSleep();
+	}
+
+	private void initialize() {
+		frmApplication = new Window();
+		frmApplication.getContentPane().add(sorting);
+
+		shuffleAndWait();
+		sorting.setName(algorithm.getName());
+		sorting.setAlgorithm(algorithm);
+		longSleep();
+
+		SwingWorker<Void, Void> swingWorker = new SwingWorker<Void, Void>() {
+			@Override
+			protected Void doInBackground() throws Exception {
+				try {
+					Thread.sleep(250);
+				} catch (InterruptedException ex) {
+					ex.printStackTrace();
+				}
+				shuffleAndWait();
+
+				sorting.setName(algorithm.getName());
+				sorting.setAlgorithm(algorithm);
+
+				algorithm.execute(sorting);
+				sorting.highlightArray();
+				longSleep();
+				return null;
+			}
+		};
+
+		swingWorker.execute();
+	}
+
+	public static Window getwindow() {
+		return frmApplication;
+	}
 }
