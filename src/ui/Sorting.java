@@ -22,16 +22,18 @@ public class Sorting extends JPanel {
 	private static final double BAR_HEIGHT_PERCENT = 512.0 / 720.0;
 	private static final int BAR_WIDTH = 5;
 	public static final int WINDOW_HEIGHT = 720;
-	public static final int WINDOW_WIDTH = 1280;
+	public static final int WINDOW_WIDTH = 500;
 	private static final int NUM_BARS = WINDOW_WIDTH / BAR_WIDTH;
 
-	private long algorithmDelay = 0;
-	private String algorithmName = "";
+	private final ISortAlgorithm algorithm;
 
 	private int arrayAccesses = 0;
 	private final int[] array;
 
-	public Sorting() {
+	public Sorting(ISortAlgorithm algorithm) {
+		setPreferredSize(new Dimension(WINDOW_WIDTH, WINDOW_HEIGHT));
+
+		this.algorithm = algorithm;
 		setBackground(Color.GRAY);
 		array = new int[NUM_BARS];
 
@@ -40,30 +42,41 @@ public class Sorting extends JPanel {
 		}
 	}
 
-	private void update(int value, long millisecondDelay, boolean isAccess) {
+	private void update() {
 		repaint();
 
 		try {
-			Thread.sleep(millisecondDelay);
+			Thread.sleep(algorithm.getDelay());
 		} catch (InterruptedException ex) {
 			Thread.currentThread().interrupt();
 		}
-		if (isAccess)
-			arrayAccesses++;
 	}
 
-	public void swap(int firstIndex, int secondIndex, long millisecondDelay, boolean isAccess) {
+	public void swap(int firstIndex, int secondIndex, long millisecondDelay) {
+		swap(firstIndex, secondIndex, millisecondDelay, true);
+	}
+	
+	private void swap(int firstIndex, int secondIndex, long millisecondDelay, boolean isAccess) {
 		int temp = array[firstIndex];
 		array[firstIndex] = array[secondIndex];
 		array[secondIndex] = temp;
+		if (isAccess) {
+			arrayAccesses++;
+		}
 
-		update((array[firstIndex] + array[secondIndex]) / 2, millisecondDelay, isAccess);
+		update();
 	}
 
-	public void updateSingle(int index, int value, long millisecondDelay, boolean isAccess) {
+	public void updateSingle(int index, int value, long millisecondDelay) {
+		updateSingle(index, value, millisecondDelay, true);
+	}
+	
+	private void updateSingle(int index, int value, long millisecondDelay, boolean isAccess) {
 		array[index] = value;
-		update(value, millisecondDelay, isAccess);
-		repaint();
+		if (isAccess) {
+			arrayAccesses++;
+		}
+		update();
 	}
 
 	public void shuffle() {
@@ -73,12 +86,11 @@ public class Sorting extends JPanel {
 			int swapWithIndex = rng.nextInt(array.length - 1);
 			swap(i, swapWithIndex, 5, false);
 		}
-		arrayAccesses = 0;
 	}
 
 	public void highlightArray() {
 		for (int i = 0; i < getValuesSize(); i++) {
-			updateSingle(i, getValue(i), 5, false);
+			updateSingle(i, getValue(i, false), 5, false);
 		}
 	}
 
@@ -93,8 +105,8 @@ public class Sorting extends JPanel {
 			panelGraphics.addRenderingHints(renderingHints);
 			panelGraphics.setColor(Color.WHITE);
 			panelGraphics.setFont(new Font("Calibri Light", Font.BOLD, 20));
-			panelGraphics.drawString("Current algorithm: " + algorithmName, 10, 30);
-			panelGraphics.drawString("Current delay:     " + algorithmDelay + "ms", 10, 55);
+			panelGraphics.drawString("Current algorithm: " + algorithm.getName(), 10, 30);
+			panelGraphics.drawString("Current delay:     " + algorithm.getDelay() + "ms", 10, 55);
 			panelGraphics.drawString("Array accesses:    " + arrayAccesses, 10, 80);
 
 			drawBars(panelGraphics);
@@ -122,7 +134,7 @@ public class Sorting extends JPanel {
 				bufferedGraphics = bufferedImage.createGraphics();
 
 				for (int x = 0; x < NUM_BARS; x++) {
-					double currentValue = getValue(x);
+					double currentValue = getValue(x, false);
 					double percentOfMax = currentValue / maxValue;
 					double heightPercentOfPanel = percentOfMax * BAR_HEIGHT_PERCENT;
 					int height = (int) (heightPercentOfPanel * (double) getHeight());
@@ -146,30 +158,29 @@ public class Sorting extends JPanel {
 	public int getMaxValue() {
 		return Arrays.stream(this.array).max().orElse(Integer.MIN_VALUE);
 	}
-
+	
+	/**
+	 * Returns the value of the array at the given.
+	 */
 	public int getValue(int index) {
+		return getValue(index, true);
+	}
+	
+	private int getValue(int index, boolean isAccess) {
+		if (isAccess) arrayAccesses++;
 		return this.array[index];
 	}
 
 	public int getValuesSize() {
 		return this.array.length;
 	}
-
-	@Override
-	public Dimension getPreferredSize() {
-		return new Dimension(WINDOW_WIDTH, WINDOW_HEIGHT);
+	
+	public ISortAlgorithm getAlgorithm() {
+		return algorithm;
 	}
-
-	@Override
-	public void setName(String algorithmName) {
-		this.algorithmName = algorithmName;
+	
+	public void run() {
+		algorithm.execute(this);
 	}
-
-	public void setAlgorithm(ISortAlgorithm algorithm) {
-		this.algorithmDelay = algorithm.getDelay();
-	}
-
-	public long getAlgorithmDelay() {
-		return this.algorithmDelay;
-	}
+	
 }

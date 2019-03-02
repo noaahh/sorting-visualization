@@ -6,80 +6,60 @@ import javax.swing.SwingWorker;
 
 import algorithms.BubbleSort;
 import algorithms.ISortAlgorithm;
+import algorithms.InsertionSort;
 
 public class Application {
 
-	private static Window frmApplication = new Window();
+	private final Window frmApplication;
 
 	private final Sorting sorting;
-	private final ISortAlgorithm algorithm;
 
 	public static void main(String[] args) {
-		EventQueue.invokeLater(new Runnable() {
-			public void run() {
-				try {
-					Application window = new Application();
-					Application.frmApplication.setVisible(true);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
+		EventQueue.invokeLater(() -> {
+			try {
+				new Application().frmApplication.setVisible(true);
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
 		});
 	}
 
 	public Application() {
-		sorting = new Sorting();
-		algorithm = new BubbleSort();
-
+		frmApplication = new Window();
+		sorting = new Sorting(new BubbleSort());
 		initialize();
-	}
-
-	private void longSleep() {
-		try {
-			Thread.sleep(1000);
-		} catch (InterruptedException ex) {
-			ex.printStackTrace();
-		}
 	}
 
 	private void shuffleAndWait() {
 		sorting.shuffle();
-		longSleep();
+		sleep(1000);
 	}
 
 	private void initialize() {
-		frmApplication = new Window();
 		frmApplication.getContentPane().add(sorting);
-
-		shuffleAndWait();
-		sorting.setName(algorithm.getName());
-		sorting.setAlgorithm(algorithm);
-		longSleep();
 
 		SwingWorker<Void, Void> swingWorker = new SwingWorker<Void, Void>() {
 			@Override
 			protected Void doInBackground() throws Exception {
-				try {
-					Thread.sleep(250);
-				} catch (InterruptedException ex) {
-					ex.printStackTrace();
-				}
+				sleep(250);
 				shuffleAndWait();
 
-				sorting.setName(algorithm.getName());
-				sorting.setAlgorithm(algorithm);
-
-				algorithm.execute(sorting);
+				sorting.run();
 				sorting.highlightArray();
-				longSleep();
+				sleep(1000);
 				return null;
 			}
 		};
 
 		swingWorker.execute();
 	}
-
-	public static Window getwindow() {
-		return frmApplication;
+	
+	private static void sleep(long ms) {
+		try {
+			Thread.sleep(ms);
+		} catch (InterruptedException ex) {
+			ex.printStackTrace();
+		}
 	}
+	
 }
