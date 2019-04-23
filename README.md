@@ -4,5 +4,6 @@ This is a GUI application to visiualize several sorting algorithms. The GUI pres
 
 ### Supported algorithms
 * Bubble Sort
+* Insertion Sort
 
 ![screenshot](https://i.imgur.com/Pzk4aqI.jpg)
