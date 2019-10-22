@@ -22,5 +22,6 @@ public class Window extends JFrame {
 		this.setTitle("Sorting Visualization");
 		this.setBounds(100, 100, 948, 533);
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		this.setVisible(true);
 	}
 }
